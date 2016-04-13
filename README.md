@@ -18,6 +18,6 @@ The plugin converts ead xml to json object model, which allows import into archi
 
 ## Notes
 - ingestsetup.sh additionally creates and rotates logfiles
-- repository ids can be parsed from the json using the api (http://localhost:8089/repositories, for example)
+- repository ids can be found using the api (http://localhost:8089/repositories, for example); they must be parsed out
 - TO DO: harvestall.sh and ingest.sh could use repos.txt (like ingestsetup.sh), and consider making repos.txt a properties file
 - TO DO: use jq (json parser) to parse session key from api call in ingest.sh instead of unix tools
