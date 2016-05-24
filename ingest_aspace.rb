@@ -4,7 +4,6 @@ require 'json'
 require 'bundler'
 Bundler.require(:default)
 
-
 raise "No config" unless File.exist?('config.yml')
 $config = YAML.safe_load(IO.read('config.yml'))
 
@@ -27,9 +26,9 @@ end
 
 $http_logger = Logger.new('httpconn.log')
 $ingest_logger = Logger.new('ingestlog.log')
+
 $http_logger.info { "Start of Processing" }
 $ingest_logger.info { "Start of Processing" }
-
 
 class AspaceIngester
   include ::HTTMultiParty
@@ -52,11 +51,25 @@ class AspaceIngester
   def json_convert(fname)
     authorize unless @auth
     $ingest_logger.info { "Converting '#{fname}'" }
-    res = self.class.post('/plugins/jsonmodel_from_format/resource/ead',
-                    headers: {
-                      'X-ArchivesSpace-Session' => @auth,
-                      'Content-Type' => 'text/xml'},
-                    body: IO.read(fname))
+
+    begin
+
+      res = self.class.post('/plugins/jsonmodel_from_format/resource/ead',
+                            headers: {
+                              'X-ArchivesSpace-Session' => @auth,
+                              'Content-Type' => 'text/xml'},
+                            body: IO.read(fname))
+    rescue StandardError => e
+      $ingest_logger.error { "Conversion of '#{fname}' failed with error '#{e}'" }
+      File.open('error_responses', 'a') do |f|
+        f.puts "Backtrace for '#{fname}' at #{DateTime.now.to_s.sub(/-04:00\z/, '')} [CONVERSION]"
+        f.puts '<<<<<<<<<<<<<<<<<<<<<<<<<<<'
+        f.puts e.backtrace.join("\n")
+        f.puts '>>>>>>>>>>>>>>>>>>>>>>>>>>>'
+      end
+      return nil
+    end
+
     if res.code != 200
       $ingest_logger.warn { "Conversion of '#{fname}' failed with code '#{res.code}', body of response is in 'error_responses'" }
       File.open('error_responses', 'a') do |f|
@@ -78,12 +91,25 @@ class AspaceIngester
   def upload(repo_id, json, fname)
     $ingest_logger.info { "Uploading JSON from '#{fname}'" }
     authorize unless @auth
-    res = self.class.post("/repositories/#{repo_id}/batch_imports",
-                          headers: {
-                            'X-ArchivesSpace-Session' => @auth,
-                            'Content-type' => 'application/json'
-                          },
-                          body: json)
+
+    begin
+      res = self.class.post("/repositories/#{repo_id}/batch_imports",
+                            headers: {
+                              'X-ArchivesSpace-Session' => @auth,
+                              'Content-type' => 'application/json'
+                            },
+                            body: json)
+    rescue StandardError => e
+      $ingest_logger.error { "Upload of '#{fname}' failed with error '#{e}'" }
+       File.open('error_responses', 'a') do |f|
+        f.puts "Backtrace for '#{fname}' at #{DateTime.now.to_s.sub(/-04:00\z/, '')} [UPLOAD]"
+        f.puts '<<<<<<<<<<<<<<<<<<<<<<<<<<<'
+        f.puts e.backtrace.join("\n")
+        f.puts '>>>>>>>>>>>>>>>>>>>>>>>>>>>'
+       end
+       return nil
+    end
+
     if res.code != 200
       $ingest_logger.warn { "Upload of '#{fname}' failed with code '#{res.code}', body of response is in 'error_responses'" }
       File.open('error_responses', 'a') do |f|
@@ -106,7 +132,8 @@ class AspaceIngester
 end
 
 client = AspaceIngester.new
-
+successes = 0
+total = 0
 $ingest_logger.info { "BEGIN INGEST" }
 ingest_files = Dir[File.join($config['ingest_dir'], '*.xml')].
                group_by {|f| File.basename(f)[0..2]}.
@@ -114,15 +141,18 @@ ingest_files = Dir[File.join($config['ingest_dir'], '*.xml')].
 ingest_files.each do |k, v|
   $ingest_logger.info { "BEGIN Ingest of finding aids for '#{k}'" }
   v.each do |fname|
+    total += 1
     json = client.json_convert(fname)
     if json
-      client.upload($config['repositories'][k],
-                    json.to_json,
-                    fname)
+      success = client.upload($config['repositories'][k],
+                              json.to_json,
+                              fname)
+      successes += 1 if success
     end
   end
   $ingest_logger.info { "END ingest of finding aids for '#{k}'" }
 end
+$ingest_logger.info { "OK: #{successes} FAIL: #{total - successes} TOTAL: #{total}" }
 $ingest_logger.info { "END INGEST" }
 
 $http_logger.close
