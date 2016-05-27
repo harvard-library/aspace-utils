@@ -1,0 +1,30 @@
+backend_uri: http://my-backend-server.example.com
+password: my_clever_password
+ingest_dir: ./where_my_files_live
+repositories: # Keys: leading 3-letter prefix of EAD file, Values: DB ID of repository
+  ajp: 13
+  arn: 31
+  art: 9
+  bak: 11
+  ber: 10
+  dca: 24
+  div: 12
+  env: 19
+  fal: 17
+  far: 29
+  fun: 23
+  gra: 30
+  gsd: 7
+  hfa: 21
+  hou: 15
+  hua: 4
+  hyl: 22
+  law: 5
+  mcz: 20
+  med: 14
+  mus: 25
+  pea: 6
+  sch: 8
+  toz: 26
+  uri: 27
+  wid: 28

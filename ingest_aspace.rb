@@ -136,6 +136,7 @@ successes = 0
 total = 0
 $ingest_logger.info { "BEGIN INGEST" }
 ingest_files = Dir[File.join($config['ingest_dir'], '*.xml')].
+               sort.
                group_by {|f| File.basename(f)[0..2]}.
                select {|k,v| $config['repositories'][k]}
 ingest_files.each do |k, v|
