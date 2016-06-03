@@ -26,19 +26,19 @@ end
 
 $http_logger = Logger.new('httpconn.log')
 $ingest_logger = Logger.new('ingestlog.log')
-
 $http_logger.info { "Start of Processing" }
 $ingest_logger.info { "Start of Processing" }
 
 class AspaceIngester
   include ::HTTMultiParty
   persistent_connection_adapter(logger: $http_logger)
+  default_timeout 180
 
   base_uri "#{$config['backend_uri']}"
 
   def authorize
     res = self.class.post('/users/admin/login',
-                           query: {password: $config['password']})
+                          query: {password: $config['password']})
     if res.code == 200
       sess = JSON.parse(res.body)
       token = sess['session']
@@ -62,7 +62,7 @@ class AspaceIngester
     rescue StandardError => e
       $ingest_logger.error { "Conversion of '#{fname}' failed with error '#{e}'" }
       File.open('error_responses', 'a') do |f|
-        f.puts "Backtrace for '#{fname}' at #{DateTime.now.to_s.sub(/-04:00\z/, '')} [CONVERSION]"
+	      f.puts "Error for '#{fname}' at #{DateTime.now.to_s.sub(/-04:00\z/, '')} [CONVERSION]"
         f.puts '<<<<<<<<<<<<<<<<<<<<<<<<<<<'
         f.puts e.backtrace.join("\n")
         f.puts '>>>>>>>>>>>>>>>>>>>>>>>>>>>'
@@ -101,13 +101,13 @@ class AspaceIngester
                             body: json)
     rescue StandardError => e
       $ingest_logger.error { "Upload of '#{fname}' failed with error '#{e}'" }
-       File.open('error_responses', 'a') do |f|
-        f.puts "Backtrace for '#{fname}' at #{DateTime.now.to_s.sub(/-04:00\z/, '')} [UPLOAD]"
+      File.open('error_responses', 'a') do |f|
+	      f.puts "Error for '#{fname}' at #{DateTime.now.to_s.sub(/-04:00\z/, '')} [UPLOAD]"
         f.puts '<<<<<<<<<<<<<<<<<<<<<<<<<<<'
         f.puts e.backtrace.join("\n")
         f.puts '>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-       end
-       return nil
+      end
+      return nil
     end
 
     if res.code != 200
