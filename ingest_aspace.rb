@@ -13,8 +13,11 @@ class Logger
   end
 
   %I|debug info warn error|.each do |level|
-    define_method level, ->(&block) do
-      @file.write("#{DateTime.now.to_s.sub(/-04:00\z/, '')} [#{level.to_s.upcase}] #{block.yield}\n")
+    define_method level, ->(text = nil, &block) do
+      if block_given?
+        text = block.yield
+      end
+      @file.write("#{DateTime.now.to_s.sub(/-04:00\z/, '')} [#{level.to_s.upcase}] #{text}\n")
       @file.flush
     end
   end
