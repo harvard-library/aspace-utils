@@ -64,8 +64,14 @@ $ingest_logger.info { "Start of Processing" }
 class AspaceIngester
   @@auth = nil
 
+  def parse_json(txt)
+    JSON.parse(txt)
+  rescue JSON::ParserError => e
+    nil
+  end
+
   def initialize
-    @hydra = Typhoeus::Hydra.new(max_concurrency: $config.fetch('max_concurrency', 20))
+    @hydra = Typhoeus::Hydra.new(max_concurrency: $config.fetch('max_concurrency', 4))
     @base_uri = "#{$config['backend_uri']}"
   end
 
@@ -74,7 +80,7 @@ class AspaceIngester
     res = Typhoeus.post(URI.join(@base_uri, '/users/admin/login'),
                         params: {password: $config['password']})
     if res.code == 200
-      sess = JSON.parse(res.body)
+      sess = parse_json(res.body)
       token = sess['session']
       return (@@auth = token) if token
     end
@@ -101,7 +107,7 @@ class AspaceIngester
                $ingest_logger.warn { "Conversion of '#{fname}' failed with code '#{res.code}', body of response is in 'error_responses'" }
                $error_logger.debug(:conversion, fname, res)
                nil
-             elsif (payload = JSON.parse(res.body)) && payload.is_a?(Hash)
+             elsif (payload = parse_json(res.body)) && payload.is_a?(Hash)
                $ingest_logger.warn { "Conversion of '#{fname}' failed with error '#{payload['error']}'" }
                nil
              else
@@ -123,7 +129,7 @@ class AspaceIngester
             $ingest_logger.warn { "Upload of '#{fname}' failed with code '#{res.code}', body of response is in 'error_responses'" }
             $error_logger.debug(:upload, fname, res)
             nil
-          elsif (payload = JSON.parse(res.body)) &&
+          elsif (payload = parse_json(res.body)) &&
                 payload.last.key?('errors') &&
                 !payload.last['errors'].empty?
             $ingest_logger.warn { "Upload of '#{fname}' failed with error '#{payload.last['errors']}'" }
@@ -158,7 +164,7 @@ client = AspaceIngester.new
 ingest_files = Dir[File.join($config['ingest_dir'], '*.xml')].
                sort.
                select {|f| $config['repositories'][File.basename(f)[0..2]]}
-ingest_files.each_slice(100) do |batch|
+ingest_files.each_slice($config.fetch('batch_size', 20)) do |batch|
   if batch.count > 0
     batch.each do |fname|
       client.queue_for_ingest(fname)
