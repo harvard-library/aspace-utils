@@ -76,7 +76,6 @@ class AspaceIngester
   end
 
   def authorize
-    return @@auth if @@auth
     res = Typhoeus.post(URI.join(@base_uri, '/users/admin/login'),
                         params: {password: $config['password']})
     if res.code == 200
@@ -97,7 +96,7 @@ class AspaceIngester
       method: :post,
       accept_encoding: "gzip",
       headers: {
-        'X-ArchivesSpace-Session' => authorize,
+        'X-ArchivesSpace-Session' => @@auth,
         'Content-Type' => 'text/xml; charset=UTF-8'
       },
       body: IO.read(fname)
@@ -120,7 +119,7 @@ class AspaceIngester
           method: :post,
           accept_encoding: "gzip",
           headers: {
-            'X-ArchivesSpace-Session' => authorize,
+            'X-ArchivesSpace-Session' => @@auth,
             'Content-type' => 'application/json; charset=UTF-8'
           },
           body: success.to_json)
@@ -165,6 +164,7 @@ ingest_files = Dir[File.join($config['ingest_dir'], '*.xml')].
                sort.
                select {|f| $config['repositories'][File.basename(f)[0..2]]}
 ingest_files.each_slice($config.fetch('batch_size', 20)) do |batch|
+  client.authorize
   if batch.count > 0
     batch.each do |fname|
       client.queue_for_ingest(fname)
