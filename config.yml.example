@@ -1,6 +1,7 @@
 backend_uri: http://my-backend-server.example.com
 password: my_clever_password
 ingest_dir: ./where_my_files_live
+max_concurrency: 1 # Sadly, ArchivesSpace currently doesn't handle multiple uploads gracefully
 repositories: # Keys: leading 3-letter prefix of EAD file, Values: DB ID of repository
   ajp: 13
   arn: 31
