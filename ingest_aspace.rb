@@ -90,7 +90,10 @@ class AspaceIngester
 
   def queue_for_ingest(fname)
     repo_id = $config['repositories'][File.basename(fname)[0..2]]
-    $total += 1
+    $totlock.synchronize do
+      $total += 1
+    end
+
     json_req = Typhoeus::Request.new(
       URI.join(@base_uri, '/plugins/jsonmodel_from_format/resource/ead'),
       method: :post,
@@ -156,6 +159,7 @@ $successes = 0
 $total = 0
 
 $succlock = Mutex.new
+$totlock = Mutex.new
 
 $ingest_logger.info { "BEGIN INGEST" }
 client = AspaceIngester.new
