@@ -37,7 +37,7 @@ The ingester populates two log files - ingestlog.log and error_responses
 At Harvard, we've been running this under screen to keep this running over long periods of time.
 
 ## A sad note on max_concurrency
-This script is set up to do concurrent requests, but unfortunately this cannot be recommended at this time, due to what I believe is a race condition with creating Subjects/Agents/other shared fields.
+This script is set up to do concurrent requests, but unfortunately this cannot be recommended at this time, due to a race condition with creating Subjects/Agents/other shared fields, which is scheduled to be fixed in ArchivesSpace 1.5.2.
 
 ## Analysis script
 There's also an "analyze_logs.rb" script provided, which can be used thusly:
