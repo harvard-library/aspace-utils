@@ -1,7 +1,7 @@
 # ASpace EAD Batch Ingest Scripts
 
 These scripts rely on the presence of the [aspace-jsonmodel-from-format plugin](https://github.com/lyrasis/aspace-jsonmodel-from-format) in your instance of ArchivesSpace.
-The plugin converts ead xml to json object model, which allows import into archivesspace. These scripts need not run on the same instance as the aspace instance, we use http post calls to the api (http://your.aspaceinstance:8089/..., for instance)
+The plugin converts ead xml to json object model, which allows import into ArchivesSpace. These scripts need not run on the same instance as the aspace instance, we use http post calls to the api (http://your.aspaceinstance:8089/..., for instance)
 
 ## Prerequisites
 - In your (remote or local) instance of aspace, install the aspace-jsonmodel-from-format plugin. Install info at:
@@ -36,8 +36,8 @@ The ingester populates two log files - ingestlog.log and error_responses
 
 At Harvard, we've been running this under screen to keep this running over long periods of time.
 
-## A sad note on max_concurrency
-This script is set up to do concurrent requests, but unfortunately this cannot be recommended at this time, due to a race condition with creating Subjects/Agents/other shared fields, which is scheduled to be fixed in ArchivesSpace 1.5.2.
+## A cautionary note on max_concurrency
+This script can do concurrent requests, but versions of ArchivesSpace prior to 1.5.2 had a race condition around creating Subjects/Agents/other shared fields.  If using any prior version, you MUST set max_concurrency to 1.
 
 ## Analysis script
 There's also an "analyze_logs.rb" script provided, which can be used thusly:
