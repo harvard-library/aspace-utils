@@ -76,7 +76,7 @@ class AspaceIngester
   end
 
   def authorize
-    res = Typhoeus.post(URI.join(@base_uri, '/users/admin/login'),
+    res = Typhoeus.post(URI.join(@base_uri, "/users/#{$config.fetch('username', 'admin')}/login"),
                         params: {password: $config['password']})
     if res.code == 200
       sess = parse_json(res.body)
