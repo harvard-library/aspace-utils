@@ -89,7 +89,7 @@ class AspaceIngester
   end
 
   def queue_for_ingest(fname)
-    repo_id = $config['repositories'][File.basename(fname)[0..2]]
+    repo_id = $config['repositories'][File.basename(fname)[/^\D+/]]
     $totlock.synchronize do
       $total += 1
     end
@@ -166,7 +166,7 @@ client = AspaceIngester.new
 
 ingest_files = Dir[File.join($config['ingest_dir'], '*.xml')].
                sort.
-               select {|f| $config['repositories'][File.basename(f)[0..2]]}
+               select {|f| $config['repositories'][File.basename(f)[/^\D+/]]}
 ingest_files.each_slice($config.fetch('batch_size', 20)) do |batch|
   client.authorize
   if batch.count > 0
