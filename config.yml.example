@@ -1,8 +1,18 @@
 backend_uri: http://my-backend-server.example.com
+username: user_who_can_create_records # defaults to "admin"
 password: my_clever_password
+
+# Directory with EAD files to be uploaded
 ingest_dir: ./where_my_files_live
-max_concurrency: 1 # Sadly, ArchivesSpace currently doesn't handle multiple uploads gracefully
-repositories: # Keys: leading 3-letter prefix of EAD file, Values: DB ID of repository
+
+# This MUST be set to 1 prior to ArchivesSpace v1.5.2 due to known issue
+max_concurrency: 1
+
+# Currently, the import script doesn't know how to find repositories from shortnames
+# Therefore, it's necessary to build a manual mapping from one to the other.
+
+# Keys: leading non-numeric prefix of EAD file, Values: DB ID of repository
+repositories:
   ajp: 13
   arn: 31
   art: 9
