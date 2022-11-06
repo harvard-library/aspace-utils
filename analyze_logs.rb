@@ -45,14 +45,14 @@ end
 five_hundreds = $ingestlog.
                 lines.
                 grep(/Conversion of.*failed.*code '5\d{2}/).
-                map {|el| (m = el.match(/full\/(.*?).xml/)) && m[1]}.
+                map {|el| (m = el.match(/.*\/(.*?)\.xml/)) && m[1]}.
                 map {|el| [el, err_resp_for(el)]}.
                 to_h
 
 four_hundreds = $ingestlog.
                 lines.
                 grep(/Conversion of.*failed.*code '4\d{2}/).
-                map {|el| (m = el.match(/full\/(.*?).xml/)) && m[1]}.
+                map {|el| (m = el.match(/.*\/(.*?)\.xml/)) && m[1]}.
                 map {|el| [el, err_resp_for(el)]}.
                 to_h
 
@@ -62,7 +62,7 @@ by_error = {
     v['error'].each_pair do |e, x|
       canonical = "#{e.gsub(/\/\d+\//, '/$N/')}: #{x}"
       agg[canonical] ||= []
-      agg[canonical] << k
+      agg[canonical] << "#{k} - #{e}"
     end
     agg
   end,
@@ -75,7 +75,7 @@ by_error = {
   $ingestlog.
     lines.
     grep(/Upload of.*failed/).
-    map {|s| [(m = s.match(/full\/(.*?).xml/)) && m[1], s[(s.index('failed with error \'') + 19)...-2]]}.
+    map {|s| [(m = s.match(/.*\/(.*?)\.xml/)) && m[1], s[(s.index('failed with error \'') + 19)...-2]]}.
     map {|(k,v)|
     m = v.match(
       /Server error: (?:Problem creating '(?<title>.*?)(?:': )(?<error_text>.*)"\]|(?<error_name>.*?: )(?<error_text>.*)"\])/)

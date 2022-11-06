@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 require 'yaml'
 require 'json'
+require 'date_core'
+require 'uri'
 require 'bundler'
 Bundler.require(:default)
 
